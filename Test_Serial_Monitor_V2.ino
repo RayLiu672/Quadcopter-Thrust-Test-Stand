@@ -8,18 +8,19 @@ Servo ESC;
 
 void setup() {
   Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(interrupt_pin), Detected, RISING);
+  attachInterrupt(digitalPinToInterrupt(interrupt_pin), detected, RISING);
   // Attach the ESC on pin 9
   // (pin, min pulse width, max pulse width in microseconds)
   ESC.attach(9, 1000, 2000);
-  Serial.println("Enter Pulse 0: " );
   ESC.write(180);
-
+  delay(2000);
+  ESC.write(0);
+Serial.println("Enter Pulse: " );
 }
 
 void loop() {
   my_time = millis();
-  if (my_time < 20000) {
+  if (my_time < 10000) {
     //Ask for input
     current_pulse = Serial.parseInt();
     if (Serial.available()) {
@@ -43,18 +44,20 @@ void loop() {
   }
   else {
     ESC.write(0);
-    Counter();
+    counter();
 
   }
 }
 // interrupt counter
-void Detected() {
+void detected() {
   increment++;
   Serial.println(increment);
+  
 }
-void Counter() {
+void counter() {
   Serial.print("counter1: ");
   Serial.println(increment);
   delay(100);
   exit(0);
+  
 }
