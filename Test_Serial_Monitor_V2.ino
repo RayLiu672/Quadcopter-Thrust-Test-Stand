@@ -15,14 +15,15 @@ void setup() {
   ESC.write(180);
   delay(2000);
   ESC.write(0);
-Serial.println("Enter Pulse: " );
+  Serial.println("Enter Pulse: " );
 }
 
 void loop() {
   my_time = millis();
-  if (my_time < 10000) {
+  if (my_time < 12000) {
     //Ask for input
     current_pulse = Serial.parseInt();
+    Serial.println(my_time);
     if (Serial.available()) {
       //Must be a value between 0-1023
 
@@ -52,12 +53,12 @@ void loop() {
 void detected() {
   increment++;
   Serial.println(increment);
-  
+
 }
 void counter() {
   Serial.print("counter1: ");
   Serial.println(increment);
   delay(100);
   exit(0);
-  
+
 }
