@@ -1,4 +1,4 @@
-#include <HX711.h>
+#include "HX711.h"
 
 const int LOADCELL_DOUT_PIN = 4;
 const int LOADCELL_SCK_PIN = 5;
