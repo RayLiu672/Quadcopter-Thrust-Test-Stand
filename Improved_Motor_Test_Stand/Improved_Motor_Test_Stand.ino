@@ -16,7 +16,7 @@ bool first_pass = 0;
   attachInterrupt(digitalPinToInterrupt(interrupt_pin), detected, RISING);
   // Attach the ESC on pin 9
   // (pin, min pulse width, max pulse width in microseconds)
-  ESC.attach(9, 1000, 2000);
+  ESC.attach(46, 1000, 2000);
   ESC.write(180);
   delay(2000);
   ESC.write(0);
@@ -37,6 +37,7 @@ void loop() {
       Serial.println(current_pulse);
       // Send the signal to the ESC
       ESC.write(current_pulse);
+      
     }
     else {
       Serial.println("Invalid Number");
@@ -64,11 +65,11 @@ void detected() {
 float rpm_calc(unsigned long tf, unsigned long t0) {
   //conversion for microseonds to seconds
   unsigned long MICROS_2_SEC = 1e6;
-  Serial.println(tf);
-  Serial.println(t0);
+  
   //equation for rpm calculation
   double T = (tf - t0);
-  double rpm_meas = 60 / (2 * ((T)/ MICROS_2_SEC));
+  Serial.println(T);
+  double rpm_meas = 60 / (((T)/ MICROS_2_SEC));
   //returns the parameter rpm_meas
   return rpm_meas;
 }
