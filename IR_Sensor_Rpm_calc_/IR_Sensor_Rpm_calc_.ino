@@ -3,7 +3,7 @@ const byte interrupt_pin = 2;
 // time at the previous timestep
 unsigned long prev_time = 0;
 // boolean to track whether we have done a first pass
-bool first_pass = 0;
+bool first_pass = false;
 unsigned long last_millis = 0;
 String string_rpm = "rpm: ";
 String comma = ",";
@@ -30,19 +30,19 @@ void detected() {
     //call fuction rpm calc
    // if (millis() - last_millis >= TENTH_OF_SECOND )
     //{
-      float rpm_meas = rpm_Calc(curr_time, prev_time);
+      float rpm_meas = rpm_calc(curr_time, prev_time);
       Serial.println(string_rpm + rpm_meas + comma);
    // }
   }
   //first_pass is now true since we now have a prev_time to work with
-  first_pass = 1;
+  first_pass = true;
   prev_time = curr_time;
   delayMicroseconds(100);
   
 }
 
 //function where rpm is calculated
-float rpm_Calc(unsigned long t_final, unsigned long t_initial) {
+float rpm_calc(unsigned long t_final, unsigned long t_initial) {
   /*
   unsigned long SECONDS_2_MIN = 60;
   //conversion for microseonds to seconds

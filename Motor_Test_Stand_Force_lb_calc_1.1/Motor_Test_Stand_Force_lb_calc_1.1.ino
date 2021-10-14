@@ -3,7 +3,7 @@
 #define CALIBRATION_FACTOR -60250.0
 #define LOADCELL_DOUT_PIN  4
 #define LOADCELL_SCK_PIN  5
-static const int TENTH_OF_SECOND = 10;
+static const int HUNDREDTH_OF_SECOND = 10;
 static const int ESC_PIN = 9;
 static const int SIG_FIG = 5;
 static const int ZERO = 0;
@@ -43,8 +43,8 @@ void loop() {
     }
   }
   // clears the remaining data being sent
-  int incomingByte = Serial.read();
-  delay(100);
+  //int incomingByte = Serial.read();
+  //delay(75);
 }
 //function where Force(lb) is calculated
 float lb_Calc(float lb_meas) {
@@ -57,7 +57,7 @@ float lb_Calc(float lb_meas) {
 void esc_Control() {
   //Must be a value between 0-1023
   if (current_pulse >= 0 && current_pulse <= 1023) {
-    Serial.println(string_received + current_pulse);
+    //Serial.println(string_received + current_pulse);
     // scale it to use it with the servo library (value between 0 and 180)
     int mapped_pulse = map(current_pulse, 0, 1023, 0, 180);
     Serial.println(string_pulse + mapped_pulse);
@@ -71,14 +71,13 @@ void esc_Control() {
 
 //Print my force(lb)every .01 second
 void force_Output() {
-  if (millis() - last_millis >= TENTH_OF_SECOND )
+  if (millis() - last_millis >= HUNDREDTH_OF_SECOND )
   {
-    last_millis = millis();
     input_volt = scale.get_units(), SIG_FIG;
     //calls function lb_Calc to get force(lb)
     float lb_conv = lb_Calc(input_volt);
-    Serial.print("Output lb_conv: ");
     Serial.print(lb_conv, SIG_FIG);
     Serial.println(comma);
+    last_millis = millis();
   }
 }
