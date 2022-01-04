@@ -14,7 +14,7 @@ float rpm_meas;
 unsigned long curr_time;
 
 void setup() {
-  Serial.begin(2000000);
+  Serial.begin(115200);
   attachInterrupt(digitalPinToInterrupt(interrupt_pin), detected, RISING);
 }
 void loop() {
@@ -33,12 +33,7 @@ void detected() {
   curr_time = micros();
   // will skip through first iteration since no prev_time
   if (first_pass) {
-    // if (millis() - last_millis >= SAMPLING_PERIOD )
-    // {
-    //call fuction rpm calc
     rpm_meas = rpm_calc(curr_time, prev_time);
-    //Serial.println(comma + rpm_meas + comma);
-    //}
   }
   //first_pass is now true since we now have a prev_time to work with
   first_pass = true;
