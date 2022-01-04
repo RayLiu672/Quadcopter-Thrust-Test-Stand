@@ -12,6 +12,8 @@ static const unsigned long SECONDS_2_MIN = 60;
 static const float MICROS_2_SEC = 1000000.0;
 float rpm_meas;
 unsigned long curr_time;
+int counter_loop;
+int counter_inter;
 
 void setup() {
   Serial.begin(115200);
@@ -22,7 +24,8 @@ void loop() {
     //call fuction rpm calc
     if (millis() - last_millis >= SAMPLING_PERIOD )
     {
-      Serial.println(millis() + comma + rpm_meas + comma);
+      Serial.println(millis() + comma + rpm_meas + comma + counter_loop +comma+ counter_inter);
+      counter_loop = counter_loop + 1;
       last_millis = millis();
     }
   }
@@ -37,6 +40,7 @@ void detected() {
   }
   //first_pass is now true since we now have a prev_time to work with
   first_pass = true;
+  counter_inter = counter_inter + 1;
   prev_time = curr_time;
 }
 //function where rpm is calculated
