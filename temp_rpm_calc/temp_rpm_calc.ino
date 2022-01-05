@@ -1,5 +1,5 @@
 // most up to date
-const byte interrupt_pin = 2;
+const byte ir_sensor = 3;
 // time at the previous timestep
 unsigned long prev_time = 0;
 // boolean to track whether we have done a first pass
@@ -12,37 +12,56 @@ static const unsigned long SECONDS_2_MIN = 60;
 static const float MICROS_2_SEC = 1000000.0;
 float rpm_meas;
 unsigned long curr_time;
-int counter_loop;
-int counter_inter;
-
+int sensor_val;
+int counter_loop = 0;
+int counter_inter = 0;
+bool complete = true;
 void setup() {
   Serial.begin(115200);
-  attachInterrupt(digitalPinToInterrupt(interrupt_pin), detected, RISING);
+  pinMode(ir_sensor, INPUT);
 }
 void loop() {
-  if (first_pass) {
-    //call fuction rpm calc
-    if (millis() - last_millis >= SAMPLING_PERIOD )
-    {
-      Serial.println(millis() + comma + rpm_meas + comma + counter_loop +comma+ counter_inter);
-      counter_loop = counter_loop + 1;
-      last_millis = millis();
+  sensor_val = digitalRead(ir_sensor);
+  if (sensor_val == 1 && complete == true) {
+    sensor_val = 0;
+    complete = false;
+    detected();
+    if (first_pass) {
+      //if (millis() - last_millis >= SAMPLING_PERIOD )
+      //{
+        Serial.println(rpm_meas + comma + curr_time + comma + prev_time);
+      }//
     }
+    complete = true;
   }
-}
+  /*
+      if (first_pass) {
+      //call fuction rpm calc
+      if (millis() - last_millis >= SAMPLING_PERIOD )
+      {
+        //Serial.println(millis() + comma + rpm_meas + comma + counter_loop +comma+ counter_inter);
+        //Serial.println(rpm_meas + comma);
+        last_millis = millis();
+      }
+      }
+  */
+  //counter_loop++;
+  //Serial.println(counter_loop +comma+ counter_inter);
+
 // interrupt function
 void detected() {
+  //counter_inter++;
   // time is in mircrosecondspy
   curr_time = micros();
   // will skip through first iteration since no prev_time
   if (first_pass) {
-    rpm_calc(curr_time, prev_time);
+   rpm_calc(curr_time, prev_time);
   }
   //first_pass is now true since we now have a prev_time to work with
   first_pass = true;
-  counter_inter = counter_inter + 1;
   prev_time = curr_time;
 }
+
 //function where rpm is calculated
 void rpm_calc(unsigned long t_final, unsigned long t_initial) {
   //unsigned long time_diff = (t_final - t_initial);
