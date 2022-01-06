@@ -1,6 +1,6 @@
 #include <digitalWriteFast.h>
 
-const int ir_sensor = 45;
+const int IR_SENSOR_PIN = 45;
 // time at the previous timestep
 unsigned long prev_time = 0;
 // boolean to track whether we have done a first pass
@@ -19,11 +19,11 @@ float conversion;
 
 void setup() {
   Serial.begin(74880);
-  pinModeFast(ir_sensor, INPUT);
+  pinModeFast(IR_SENSOR_PIN, INPUT);
 
 }
 void loop() {
-  curr_state = digitalReadFast(ir_sensor);
+  curr_state = digitalReadFast(IR_SENSOR_PIN);
   if (curr_state) {
     detected();
   }
