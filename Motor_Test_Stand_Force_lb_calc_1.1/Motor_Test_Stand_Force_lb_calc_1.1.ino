@@ -1,6 +1,6 @@
 #include <Servo.h>
 #include "HX711.h"
-#define CALIBRATION_FACTOR -60250.0
+#define CALIBRATION_FACTOR -60000.0
 #define LOADCELL_DOUT_PIN  4
 #define LOADCELL_SCK_PIN  5
 static const int HUNDREDTH_OF_SECOND = 10;
@@ -43,8 +43,8 @@ void loop() {
     }
   }
   // clears the remaining data being sent
-  //int incomingByte = Serial.read();
-  //delay(75);
+  int incomingByte = Serial.read();
+  delay(75);
 }
 //function where Force(lb) is calculated
 float lb_Calc(float lb_meas) {

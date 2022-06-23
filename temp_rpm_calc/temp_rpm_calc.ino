@@ -18,7 +18,7 @@ bool prev_state;
 float conversion;
 
 void setup() {
-  Serial.begin(74880);
+  Serial.begin(115200);
   pinModeFast(IR_SENSOR_PIN, INPUT);
 
 }

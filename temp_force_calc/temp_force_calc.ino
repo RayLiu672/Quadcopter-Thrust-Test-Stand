@@ -1,17 +1,19 @@
+// Most up to date
 #include <Servo.h>
 #include "HX711.h"
-#define CALIBRATION_FACTOR -60250.0
-#define LOADCELL_DOUT_PIN  4
-#define LOADCELL_SCK_PIN  5
-static const int HUNDREDTH_OF_SECOND = 10;
+#define CALIBRATION_FACTOR -60000.0
+#define LOADCELL_DOUT_PIN  2
+#define LOADCELL_SCK_PIN  3
+// has to be 100 since load cell cannot keep up
+static const int SAMPLING_PERIOD = 100;
+static const float LOAD_CELL_SCALE = .0035;
+static const float LOAD_CELL_BIAS = 6.5861;
 static const int ESC_PIN = 9;
 static const int SIG_FIG = 5;
-static const int ZERO = 0;
-unsigned int current_pulse;
+unsigned int current_pulse = 0;
 unsigned long last_millis = 0;
 float input_volt;
 String number_input;
-String string_received = "Number received: ";
 String string_pulse = "mapped_pulse: ";
 String comma = ",";
 // create servo object to control the ESC
@@ -19,7 +21,7 @@ Servo ESC;
 HX711 scale;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
   scale.set_scale(CALIBRATION_FACTOR);
   ESC.attach(ESC_PIN, 1000, 2000);
@@ -27,34 +29,40 @@ void setup() {
   delay(2000);
   ESC.write(0);
   scale.tare();
-  current_pulse = 0;
   Serial.println("Enter Pulse: " );
 }
 void loop() {
   // go into this loop only when there is data available
   if (Serial.available()) {
     current_pulse = Serial.parseInt();
-    esc_Control();
+    esc_control();
   }
   else {
-    // only print when the motor is running
-    if (current_pulse > ZERO) {
-      force_Output();
-    }
+    // only print when the motor is running 
+      if (millis() - last_millis >= SAMPLING_PERIOD )
+  {
+    input_volt = scale.get_units(), SIG_FIG;
+    //calls function lb_Calc to get force(lb)
+    float lb_conv = lb_calc(input_volt);
+    //Serial.print(lb_conv, SIG_FIG);
+    //Serial.print(comma);
+    //Serial.println(millis());
+    last_millis = millis();
   }
+}
   // clears the remaining data being sent
-  //int incomingByte = Serial.read();
-  //delay(75);
+  int incomingByte = Serial.read();
+  delay(75);
 }
 //function where Force(lb) is calculated
-float lb_Calc(float lb_meas) {
+float lb_calc(float lb_meas) {
   //equation that is used to get our output
-  float lb_conv = (lb_meas - .0035) / 6.5861;
+  float lb_conv = (lb_meas - LOAD_CELL_SCALE) / LOAD_CELL_BIAS;
   return lb_conv;
 }
 
 // Sends value to the ESC that runs the motor
-void esc_Control() {
+void esc_control() {
   //Must be a value between 0-1023
   if (current_pulse >= 0 && current_pulse <= 1023) {
     //Serial.println(string_received + current_pulse);
@@ -66,18 +74,5 @@ void esc_Control() {
   }
   else {
     Serial.println("Invalid Number");
-  }
-}
-
-//Print my force(lb)every .01 second
-void force_Output() {
-  if (millis() - last_millis >= HUNDREDTH_OF_SECOND )
-  {
-    input_volt = scale.get_units(), SIG_FIG;
-    //calls function lb_Calc to get force(lb)
-    float lb_conv = lb_Calc(input_volt);
-    Serial.print(lb_conv, SIG_FIG);
-    Serial.println(comma);
-    last_millis = millis();
   }
 }
