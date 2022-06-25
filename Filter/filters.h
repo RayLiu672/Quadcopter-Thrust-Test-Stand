@@ -1,7 +1,6 @@
 #ifndef FILTERS_H
 #define FILTERS_H
 
-// Most general
 class LowpassFilter
 {
     public: 
@@ -10,17 +9,17 @@ class LowpassFilter
 
         ~LowpassFilter();
         
+        float filter(float val, float dt);
         /**
-         * Apply lowpass filter to incoming val
-         *  
          * @param val value to be filtered
          * @param dt difference between current and previous time
          * @return Filtered val with respect to _time_const and
          */
-        float filter(float val, float dt);
-        //method
+
         float get_time_const();
+
         void set_time_const(float curr_time);
+
         void Reset(float val);
         
     private:
@@ -36,26 +35,19 @@ class HighpassFilter
 
         ~HighpassFilter();
 
+        float filter(float val, float dt);
         /**
-         * Apply lowpass filter to incoming val
-         *  
          * @param val value to be filtered
          * @param dt difference between current and previous time
-         * @return Filtered val with respect to _time_const and
+         * @return Filtered val with respect to _time_const
          */
-        float filter(float val, float dt);
 
         void Reset(float val);
 
     private:
         float _time_const;
         float _prev_filtered_val = 0.0f;
-        float prev_val = 0;
+        float _prev_val = 0;
 };
-
-class ComplimentaryFilter
-{
-    
-} ;
 
 #endif // FILTERS_H
