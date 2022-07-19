@@ -35,6 +35,7 @@ void setup(void) {
   Serial.begin(115200);
   IcmSetup();
   delay(1000);
+  Serial.println("Roll,Pitch");
   
 }
 
@@ -42,6 +43,8 @@ void loop() {
   static float PrevTime;
   static float CompRoll;
   static float CompPitch;
+  static float GyroRoll = 0;
+  static float GyroPitch = 0;
   
   //float GyroAngle[] = {0.0001, 0};
   //  /* Get a new normalized sensor event */
@@ -49,22 +52,26 @@ void loop() {
   float CurrTime = millis();
   if(firstpass){
     Dt = (CurrTime - PrevTime) / 1000;
-    //Serial.println(Dt, 4);
     // Take in array from lowpass function
     float* FiltAccel = lowpass();
+    // Estimated Accelerometer Angles
     float AccelRoll = atan2(FiltAccel[1],FiltAccel[2]);
     float AccelPitch = asin(FiltAccel[0]/GRAVITY);
     
     // Take in array from highpass function
-    float* GyroAngle = highpass();
-    CompRoll = AccelRoll * LPFCONST + (HPFCONST)*(PrevCompRoll + Dt * GyroAngle[0] * RADTODEG);
-    CompPitch = AccelPitch * LPFCONST + (HPFCONST)*(PrevCompPitch + Dt * GyroAngle[1] * RADTODEG);
+    float* GyroAngle = highpass();  
+    GyroRoll += Dt * GyroAngle[0] * RADTODEG;
+    GyroPitch += Dt * GyroAngle[1] * RADTODEG;
+    CompRoll = AccelRoll * LPFCONST + (HPFCONST)*(PrevCompRoll);
+    CompPitch = AccelPitch * LPFCONST + (HPFCONST)*(PrevCompPitch);
     PrevCompRoll = CompRoll;
     PrevCompPitch = CompPitch;
     }
-//    Serial.println("CompRoll");
-//    Serial.println(CompRoll, 4);
-    //Serial.println(CompPitch, 4);
+    Serial.print(CompRoll, 4);
+    Serial.print(',');
+    Serial.print(CompPitch, 4);
+    Serial.print(',');
+    Serial.println();
   firstpass = true;
   PrevTime = CurrTime;
 }
@@ -92,7 +99,6 @@ float* highpass(){
     FiltGyro[Axis] = hpf -> filter(GyroData[Axis], Dt);
     if (Axis < 2){
       GyroAngle[Axis] = FiltGyro[Axis] * Dt;
-      Serial.println(GyroAngle[Axis], 3);
     }    
   }
   return GyroAngle;
