@@ -56,13 +56,13 @@ void loop() {
     // Time Between getting Sensor Data and Finishing
     Dt = (CurrTime - PrevTime) / 1000;
 
-    // Take in array from lowpass function
+    // Take in Filtered AccelData from lowpass function
     float* FiltAccel = lowpass();
     // Estimated Accelerometer Angles
     float AccelRoll = atan2(FiltAccel[1], FiltAccel[2]);
     float AccelPitch = asin(FiltAccel[0] / GRAVITY);
 
-    // Take in array from highpass function
+    // Take in Filtered GyroData from highpass function
     float* FiltGyro = highpass();
 
     // Transform to Euler Rate for Roll and Pitch
