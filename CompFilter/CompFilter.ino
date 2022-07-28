@@ -4,14 +4,13 @@
 #include <Wire.h>
 
 #include "filters.h"
-const static float LPFCONST = 0.05;
-const static float HPFCONST = 0.95;
-LowpassFilter *lpf = new LowpassFilter(LPFCONST);
-HighpassFilter *hpf = new HighpassFilter(HPFCONST);
+const static float ALPHA = 0.01;
+LowpassFilter *lpf = new LowpassFilter(ALPHA);
+HighpassFilter *hpf = new HighpassFilter(1 - ALPHA);
 
 Adafruit_ICM20948 icm;
 // Delay between measurements for testing
-uint16_t measurement_delay_us = 65535; 
+uint16_t measurement_delay_us = 65535;
 // For SPI mode, we need a CS pin
 #define ICM_CS 10
 // For software-SPI mode we need SCK/MOSI/MISO pins
@@ -25,13 +24,13 @@ sensors_event_t mag;
 sensors_event_t temp;
 #define SensorAxis 3
 float Dt = 0.0;
-const static float GRAVITY = 9.81;
 float PrevCompRoll = 0.0;
 float PrevCompPitch = 0.0;
 bool firstpass = false;
-const static float RADTODEG = 180/3.14159;
+const static float GRAVITY = 9.81;
+const static float RADTODEG = 180 / 3.14159;
 
-void setup(void) {
+void setup() {
   Serial.begin(115200);
   IcmSetup();
   delay(1000);
@@ -39,74 +38,92 @@ void setup(void) {
 
 void loop() {
   static float PrevTime;
-  static float CompRoll;
-  static float CompPitch;
-  static float GyroRoll = 0;
-  static float GyroPitch = 0;
-  
-  //float GyroAngle[] = {0.0001, 0};
+  static float PrevPitchAngle = 0;
+  static float PrevRollAngle = 0;
+  static float GyroRollRate;
+  static float GyroPitchRate;
+  static float RollAngle = 0;
+  static float PitchAngle = 0;
+  static float Timer = 0;
+  static float GyroRollAngle = 0;
+  static float GyroPitchAngle = 0;
+
   //  /* Get a new normalized sensor event */
   icm.getEvent(&accel, &gyro, &temp, &mag);
   float CurrTime = millis();
-  if(firstpass){
+
+  if (firstpass  && (millis() - Timer) > 10) {
     // Time Between getting Sensor Data and Finishing
     Dt = (CurrTime - PrevTime) / 1000;
-    
-    // Take in array from lowpass function 
+
+    // Take in array from lowpass function
     float* FiltAccel = lowpass();
     // Estimated Accelerometer Angles
-    float AccelRoll = atan2(FiltAccel[1],FiltAccel[2]);
-    float AccelPitch = asin(FiltAccel[0]/GRAVITY); 
-     
+    float AccelRoll = atan2(FiltAccel[1], FiltAccel[2]);
+    float AccelPitch = asin(FiltAccel[0] / GRAVITY);
+
     // Take in array from highpass function
-    float* GyroAngle = highpass();     
-    // Complementarty Filtered Angles 
-    CompRoll = AccelRoll * LPFCONST + (HPFCONST)*(PrevCompRoll + GyroAngle[0]);
-    CompPitch = AccelPitch * LPFCONST + (HPFCONST)*(PrevCompPitch + GyroAngle[1]);
+    float* FiltGyro = highpass();
+
+    // Transform to Euler Rate for Roll and Pitch
+    GyroRollRate = FiltGyro[0] + FiltGyro[1] * sinf(PrevRollAngle) * tanf(PrevPitchAngle) + FiltGyro[2] * cosf(PrevRollAngle) * tanf(PrevPitchAngle);
+    GyroPitchRate = FiltGyro[1] * cosf(PrevRollAngle) - FiltGyro[2] * sinf(PrevRollAngle);
+
+    // Complementary Filtered Angles
+    RollAngle = AccelRoll * ALPHA + (1 - ALPHA) * (PrevRollAngle + GyroRollRate * Dt);
+    PitchAngle = AccelPitch * ALPHA + (1 - ALPHA) * (PrevPitchAngle + GyroPitchRate * Dt);
+
     // Previous Values of Complementary Filtered Roll and Pitch
-    PrevCompRoll = CompRoll;
-    PrevCompPitch = CompPitch;
-    }
-//    Serial.println("+++++++++++++++++++++");
-//    Serial.println(CompRoll, 4);
-//    Serial.println(CompPitch, 4);
-//    Serial.println("+++++++++++++++++++++");
+    PrevRollAngle = RollAngle;
+    PrevPitchAngle = PitchAngle;
+    Timer = millis(); 
+  }
+  Serial.print(RollAngle * RADTODEG, 4);
+  Serial.print(", ");
+  Serial.println(PitchAngle * RADTODEG, 4);
   // Completed firstpass to Properly Calculate Dt
   firstpass = true;
   // Set New End Point for Dt Calculation
   PrevTime = CurrTime;
+
 }
 
 // Filter accelerometer data through lowpass filter
-float* lowpass(){
+float* lowpass() {
+
+  const static float XOFFSET = 0.1050;
+  const static float YOFFSET = 0.2969;
+  const static float ZOFFSET = 0.2314;
   // Keeps Accelerometer data in memory to return
   static float FiltAccel[SensorAxis];
+  static float AccelCal[SensorAxis];
   // Set Accelerometer data into an array
   float AccelData[SensorAxis] = {accel.acceleration.x, accel.acceleration.y, accel.acceleration.z};
+  float AccelOffset[SensorAxis] = {XOFFSET, YOFFSET, ZOFFSET};
   // Filters each axis of data from Accelerometer
-  for(int Axis = 0; Axis < SensorAxis; Axis++){
-    // Sends Accelerometer data into lowpass filter function 
-    FiltAccel[Axis] = lpf -> filter(AccelData[Axis], Dt);   
+  for (int Axis = 0; Axis < SensorAxis; Axis++) {
+    AccelCal[Axis] = AccelData[Axis] - AccelOffset[Axis];
+    // Sends Accelerometer data into lowpass filter function
+    FiltAccel[Axis] = lpf -> filter(AccelCal[Axis], Dt);
   }
   return FiltAccel;
 }
 
-float* highpass(){
-  float FiltGyro[SensorAxis];
-  static float GyroAngle[SensorAxis-1];
+float* highpass() {
+  const static float XOFFSET = 0.0031;
+  const static float YOFFSET = -0.0041;
+  const static float ZOFFSET = -0.0056;
+  static float FiltGyro[SensorAxis];
+  float GyroCal[SensorAxis];
+  float GyroOffset[SensorAxis] = {XOFFSET, YOFFSET, ZOFFSET};
+
   // Store Gyro Data into an Array with Index = # of Axis
-  float GyroData[] = {gyro.gyro.x, gyro.gyro.y, gyro.gyro.z};
+  float GyroData[SensorAxis] = {gyro.gyro.x, gyro.gyro.y, gyro.gyro.z};
   // Sends Gyro Data into Highpass Filter
-  for(int Axis = 0; Axis < SensorAxis; Axis++){
-    // HighpassFilter GyroData in each Axis 
-    FiltGyro[Axis] = hpf -> filter(GyroData[Axis], Dt);  
-    // Calculate the Angle for Roll and Pitch    
-    if (Axis < 2){
-      GyroAngle[Axis] = FiltGyro[Axis] * Dt + GyroAngle[Axis];      
-    }  
-//    if (Axis < 1 && abs(GyroData[Axis]) > 0.02){
-//      GyroAngle[Axis] = FiltGyro[Axis] * Dt + GyroAngle[Axis];      
-//    }    
+  for (int Axis = 0; Axis < SensorAxis; Axis++) {
+    GyroCal[Axis] = GyroData[Axis] - GyroOffset[Axis];
+    // HighpassFilter GyroData in each Axis
+    FiltGyro[Axis] = hpf -> filter(GyroCal[Axis], Dt);
   }
-  return GyroAngle;
+  return FiltGyro;
 }
