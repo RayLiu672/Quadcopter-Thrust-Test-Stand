@@ -37,6 +37,7 @@ void setup() {
 }
 
 void loop() {
+  
   static float PrevTime;
   static float PrevPitchAngle = 0;
   static float PrevRollAngle = 0;
@@ -60,7 +61,12 @@ void loop() {
     float* FiltAccel = lowpass();
     // Estimated Accelerometer Angles
     float AccelRoll = atan2(FiltAccel[1], FiltAccel[2]);
-    float AccelPitch = asin(FiltAccel[0] / GRAVITY);
+    float AccelPitch = asinf(FiltAccel[0] / GRAVITY);
+
+    //Serial.println(FiltAccel[0]);
+    //Serial.println(AccelRoll * RADTODEG, 4);
+    //Serial.print(", ");
+    //Serial.println(AccelPitch * RADTODEG, 4);
 
     // Take in Filtered GyroData from highpass function
     float* FiltGyro = highpass();
@@ -70,29 +76,33 @@ void loop() {
     GyroPitchRate = FiltGyro[1] * cosf(PrevRollAngle) - FiltGyro[2] * sinf(PrevRollAngle);
 
     // Complementary Filtered Angles
-    RollAngle = AccelRoll * ALPHA + (1 - ALPHA) * (PrevRollAngle + GyroRollRate * Dt);
-    PitchAngle = AccelPitch * ALPHA + (1 - ALPHA) * (PrevPitchAngle + GyroPitchRate * Dt);
+    // AccelRoll * ALPHA +
+    // AccelPitch * ALPHA +
+    RollAngle = (1 - ALPHA) * (PrevRollAngle + GyroRollRate * Dt);
+    PitchAngle =  (1 - ALPHA) * (PrevPitchAngle + GyroPitchRate * Dt);
 
     // Previous Values of Complementary Filtered Roll and Pitch
     PrevRollAngle = RollAngle;
     PrevPitchAngle = PitchAngle;
-    Timer = millis(); 
+    Timer = millis();
   }
-  Serial.print(RollAngle * RADTODEG, 4);
-  Serial.print(", ");
-  Serial.println(PitchAngle * RADTODEG, 4);
+  //Serial.print(RollAngle * RADTODEG, 4);
+  //Serial.print(", ");
+  //Serial.println(PitchAngle * RADTODEG, 4);
   // Completed firstpass to Properly Calculate Dt
   firstpass = true;
   // Set New End Point for Dt Calculation
   PrevTime = CurrTime;
 
+
+
 }
 
 // Filter accelerometer data through lowpass filter
 float* lowpass() {
-
-  const static float XOFFSET = 0.1050;
-  const static float YOFFSET = 0.2969;
+  static float Prev_Filt = 0;
+  const static float XOFFSET = -0.01;
+  const static float YOFFSET = 0.2495;
   const static float ZOFFSET = 0.2314;
   // Keeps Accelerometer data in memory to return
   static float FiltAccel[SensorAxis];
@@ -104,8 +114,17 @@ float* lowpass() {
   for (int Axis = 0; Axis < SensorAxis; Axis++) {
     AccelCal[Axis] = AccelData[Axis] - AccelOffset[Axis];
     // Sends Accelerometer data into lowpass filter function
-    FiltAccel[Axis] = lpf -> filter(AccelCal[Axis], Dt);
+    Prev_Filt = lpf-> get_prev_filtered_val();
+    FiltAccel[Axis] = lpf-> filter(AccelCal[Axis], Dt);
+    
   }
+//  Serial.print(Dt, 4);
+//  Serial.print(", ");
+//  Serial.print(Prev_Filt);
+//  Serial.print(", ");
+//  Serial.print(AccelCal[0], 4);
+//  Serial.print(", ");
+//  Serial.println(FiltAccel[0], 4);
   return FiltAccel;
 }
 

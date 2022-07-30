@@ -21,6 +21,10 @@ class LowpassFilter
         void set_time_const(float curr_time);
 
         void Reset(float val);
+
+        float get_prev_filtered_val();
+
+        void set_prev_filt(float filtered_val);
         
     private:
         float _time_const;
@@ -43,6 +47,8 @@ class HighpassFilter
          */
 
         void Reset(float val);
+
+        void set_prev_filt(float prev);
 
     private:
         float _time_const;
