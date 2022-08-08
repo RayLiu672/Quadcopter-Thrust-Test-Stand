@@ -9,7 +9,7 @@ class LowpassFilter
 
         ~LowpassFilter();
         
-        float filter(float val, float dt);
+        float filter(float val, float dt, float prev_val);
         /**
          * @param val value to be filtered
          * @param dt difference between current and previous time

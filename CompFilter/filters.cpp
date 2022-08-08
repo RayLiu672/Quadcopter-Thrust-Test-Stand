@@ -29,11 +29,10 @@ float LowpassFilter::get_prev_filtered_val()
     return _prev_filtered_val;
 }
 
-float LowpassFilter::filter(float val, float dt)
+float LowpassFilter::filter(float val, float dt, float prev_val)
 {  
     const float a = dt / (_time_const + dt);
-    float filtered_val = a * val + (1 - a) * _prev_filtered_val;
-    set_prev_filt(filtered_val);
+    float filtered_val = a * val + (1 - a) * prev_val;
     return filtered_val;
 
 }
