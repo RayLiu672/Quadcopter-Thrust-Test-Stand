@@ -9,11 +9,9 @@
 DFRobot_BMP388_I2C bmp388;
 
 float seaLevel;
-
 #include "filters.h"
 const static float ALPHA = 0.2;
 LowpassFilter *lpf = new LowpassFilter(ALPHA);
-
 bool firstpass = false;
 
 void setup() {
@@ -41,22 +39,24 @@ void loop() {
 
   /* Read the calibrated altitude */
   float Altitude = bmp388.readCalibratedAltitude(seaLevel);
+  // Time set to current millisecond
   float CurrTime = millis();
-  // Print every 10ms
+  // Run every 10ms
   if (firstpass  && (millis() - Timer) > 10) {
-    // Time Between getting Sensor Data and Finishing
+    // Time between getting sensor data and finishing
     Dt = (CurrTime - PrevTime) / 1000;
     // Sends Altitude data into lowpass filter function
     FiltAlt = lpf-> filter(Altitude, Dt, PrevAlt);
-    // Compare Sensor data with Filtered Sensor data
+    // Compare sensor data with filtered sensor data
     Serial.print(FiltAlt);
     Serial.print(", ");
     Serial.println(Altitude);
+    // Set PrevAlt to current altitude for next iteration
     PrevAlt = FiltAlt;
     Timer = millis();
   }
-  // Completed firstpass to Properly Calculate Dt
+  // Completed firstpass to properly calculate Dt
   firstpass = true;
-  // Set New End Point for Dt Calculation
+  // Set new end point for Dt calculation
   PrevTime = CurrTime;
 }
