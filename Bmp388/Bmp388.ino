@@ -24,7 +24,7 @@ void setup() {
     delay(1000);
   }
   delay(100);
-  seaLevel = bmp388.readSeaLevel(16.0);
+  seaLevel = bmp388.readSeaLevel(0);
   Serial.print("seaLevel : ");
   Serial.print(seaLevel);
   Serial.println(" Pa");
@@ -38,7 +38,7 @@ void loop() {
   static float PrevAlt = 0.0;
 
   /* Read the calibrated altitude */
-  float Altitude = bmp388.readCalibratedAltitude(seaLevel);
+  float Altitude = bmp388.readAltitude();
   // Time set to current millisecond
   float CurrTime = millis();
   // Run every 10ms
