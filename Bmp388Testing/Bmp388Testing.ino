@@ -23,11 +23,10 @@ void setup() {
     Serial.println("Initialize error!");
     delay(1000);
   }
-  delay(100);
-  seaLevel = bmp388.readSeaLevel(0);
-  Serial.print("seaLevel : ");
-  Serial.print(seaLevel);
-  Serial.println(" Pa");
+//  seaLevel = bmp388.readSeaLevel(0);
+//  Serial.print("seaLevel : ");
+//  Serial.print(seaLevel);
+//  Serial.println(" Pa");
 }
 
 void loop() {
@@ -37,14 +36,15 @@ void loop() {
   static float FiltAlt;
   static float PrevAlt = 0.0;
   static float Pressure = 0;
-
+  const static float OFFSET = 210.33;
   
   // Time set to current millisecond
   float CurrTime = millis();
   // Run every 10ms
   if (firstpass  && (millis() - Timer) > 10) {
     Pressure = bmp388.readPressure();
-    float Altitude = (1.0 - pow((Pressure) / 101325, 0.190284)) * 44330; 
+    // Altitude calculation with pressure in Pa
+    float Altitude = (1.0 - pow((Pressure + OFFSET) / 101325, 0.190284)) * 44330; 
     // Time between getting sensor data and finishing
     Dt = (CurrTime - PrevTime) / 1000;
     // Sends Altitude data into lowpass filter function
